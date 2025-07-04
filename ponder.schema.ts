@@ -93,7 +93,7 @@ export const organizerClaimHistory = onchainTable("organizer_claim_history", (t)
     organizer: t.hex().notNull(),
     claimAmount: t.bigint().notNull()
 }), (table) => ({ // Constraints & indexes
-    organizerClaimHistoryPk: primaryKey({columns: [table.id, table.condition]}),
+    organizerClaimHistoryPk: primaryKey({columns: [table.id, table.session]}),
 }));
 
 /* =====================================================================
