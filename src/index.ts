@@ -1,6 +1,7 @@
 import {ponder} from "ponder:registry";
 import {
     attendSessionEvent,
+    createEvent,
     createEvent as eventTable,
     createSession,
     enrollEvent,
@@ -9,7 +10,10 @@ import {
     organizerClaimUnattendedHistory
 } from "../ponder.schema";
 
-
+/* =====================================================================
+*  Create Event
+* =====================================================================
+*/
 ponder.on("LetsCommit:CreateEvent", ({event, context}) => {
 
     // Insert Event Context
@@ -56,6 +60,10 @@ ponder.on("LetsCommit:CreateEventMetadata", ({event, context}) => {
 
 });
 
+/* =====================================================================
+*  Create Session
+* =====================================================================
+*/
 ponder.on("LetsCommit:CreateSession", ({event, context}) => {
 
     // Insert Session Created w/ Event
@@ -73,16 +81,10 @@ ponder.on("LetsCommit:CreateSession", ({event, context}) => {
 
 });
 
-ponder.on("LetsCommit:GenerateSessionToken", ({event, context}) => {
-
-    // Insert Session Token Generated
-    context.db
-        .update(createSession, {id: event.args.eventId, session: event.args.session})
-        .set({attendToken: event.args.token})
-
-});
-
-
+/* =====================================================================
+*  Participant Enroll Event
+* =====================================================================
+*/
 ponder.on("LetsCommit:EnrollEvent", ({event, context}) => {
 
     // Insert Participant when enrolling an Event
@@ -97,7 +99,10 @@ ponder.on("LetsCommit:EnrollEvent", ({event, context}) => {
 
 });
 
-// Insert Participant when attending an Event
+/* =====================================================================
+*  Participant Attend Session Event
+* =====================================================================
+*/
 ponder.on("LetsCommit:AttendEventSession", ({event, context}) => {
 
     context.db
@@ -112,12 +117,17 @@ ponder.on("LetsCommit:AttendEventSession", ({event, context}) => {
 
 });
 
+/* =====================================================================
+*  Organizer First Claim
+* =====================================================================
+*/
 ponder.on("LetsCommit:OrganizerFirstClaim", ({event, context}) => {
 
     context.db
         .insert(organizerClaimHistory)
         .values({
             id: event.args.eventId,
+            session: -1, // After sell and Before any session
             condition: 'F',
             organizer: event.args.organizer,
             claimAmount: event.args.claimAmount
@@ -126,12 +136,49 @@ ponder.on("LetsCommit:OrganizerFirstClaim", ({event, context}) => {
 
 });
 
-ponder.on("LetsCommit:OrganizerLastClaim", ({event, context}) => {
+/* =====================================================================
+*  Generate Session Token And Release
+* =====================================================================
+*/
+ponder.on("LetsCommit:SetSessionCode", ({event, context}) => {
 
+    // Insert Session Token Generated
     context.db
         .insert(organizerClaimHistory)
         .values({
             id: event.args.eventId,
+            session: event.args.session,
+            condition: 'P',
+            organizer: event.args.organizer,
+            claimAmount: event.args.releasedAmount
+        })
+        .onConflictDoNothing();
+
+});
+
+ponder.on("LetsCommit:GenerateSessionToken", ({event, context}) => {
+
+    // Insert Session Token Generated
+    context.db
+        .update(createSession, {id: event.args.eventId, session: event.args.session})
+        .set({attendToken: event.args.token})
+
+});
+
+/* =====================================================================
+*  Organizer Last Claim
+* =====================================================================
+*/
+ponder.on("LetsCommit:OrganizerLastClaim", async ({event, context}) => {
+
+    const eventEntity = await context.db
+        .find(createEvent, {id: event.args.eventId});
+
+    await context.db
+        .insert(organizerClaimHistory)
+        .values({
+            id: event.args.eventId,
+            session: eventEntity!.totalSession - 1, // Last Session
             condition: 'L',
             organizer: event.args.organizer,
             claimAmount: event.args.claimAmount
@@ -140,6 +187,10 @@ ponder.on("LetsCommit:OrganizerLastClaim", ({event, context}) => {
 
 });
 
+/* =====================================================================
+*  Organizer Last Claim Unattended
+* =====================================================================
+*/
 ponder.on("LetsCommit:OrganizerClaimUnattended", ({event, context}) => {
 
     context.db

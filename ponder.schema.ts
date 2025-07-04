@@ -9,7 +9,10 @@ export const account = onchainTable("account", (t) => ({
     amount: t.bigint().notNull(),
 }));
 
-// ========================= Event =========================
+/* =====================================================================
+*                               Event Table
+* =====================================================================
+*/
 
 export const createEvent = onchainTable("event", (t) => ({
     id: t.bigint().primaryKey(),
@@ -26,6 +29,10 @@ export const createEvent = onchainTable("event", (t) => ({
     organizer: t.hex().notNull(),
 }));
 
+/* =====================================================================
+*                               Event's Tag Table
+* =====================================================================
+*/
 export const eventTag = onchainTable("event_tag", (t) => ({
     id: t.bigint(), // Event Id
     index: t.integer(), // Index
@@ -34,6 +41,10 @@ export const eventTag = onchainTable("event_tag", (t) => ({
     eventTagPk: primaryKey({columns: [table.id, table.index]}),
 }));
 
+/* =====================================================================
+*                               Enroll Table
+* =====================================================================
+*/
 export const enrollEvent = onchainTable("enroll", (t) => ({
     id: t.bigint(), // Event ID
     participant: t.hex().notNull(), // Participant Address
@@ -42,6 +53,10 @@ export const enrollEvent = onchainTable("enroll", (t) => ({
     enrollPk: primaryKey({columns: [table.id, table.participant]}),
 }));
 
+/* =====================================================================
+*                               Session Table
+* =====================================================================
+*/
 export const createSession = onchainTable("session", (t) => ({
     id: t.bigint(), // Event ID
     session: t.int8({mode: "number"}).notNull(), // Session Number
@@ -53,6 +68,10 @@ export const createSession = onchainTable("session", (t) => ({
     sessionPk: primaryKey({columns: [table.id, table.session]}),
 }));
 
+/* =====================================================================
+*                               Attend Table
+* =====================================================================
+*/
 export const attendSessionEvent = onchainTable("attend_event_session", (t) => ({
     id: t.bigint(), // Event ID
     session: t.int8({mode: "number"}).notNull(), // Session Number
@@ -62,17 +81,25 @@ export const attendSessionEvent = onchainTable("attend_event_session", (t) => ({
     attendEventSessionPk: primaryKey({columns: [table.id, table.session, table.participant]}),
 }));
 
-
+/* =====================================================================
+*                               Claim History Table
+* =====================================================================
+*/
 export const organizerClaimHistory = onchainTable("organizer_claim_history", (t) => ({
     id: t.bigint(), // Event ID
-    condition: t.char({enum: ['F', 'L']}).notNull(),
+    session: t.int8({mode: "number"}).notNull(), // Event ID
+    // First, Last, Partial,
+    condition: t.char({enum: ['F', 'L', 'P']}).notNull(),
     organizer: t.hex().notNull(),
     claimAmount: t.bigint().notNull()
 }), (table) => ({ // Constraints & indexes
     organizerClaimHistoryPk: primaryKey({columns: [table.id, table.condition]}),
 }));
 
-
+/* =====================================================================
+*                      Claim Unattended History Table
+* =====================================================================
+*/
 export const organizerClaimUnattendedHistory = onchainTable("organizer_claim_unattended_history", (t) => ({
     id: t.bigint().notNull(), // Event ID
     session: t.int8({mode: "number"}).notNull(), // Session Number
