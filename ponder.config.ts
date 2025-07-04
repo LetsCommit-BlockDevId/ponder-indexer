@@ -33,10 +33,17 @@ export default createConfig({
     database: postgreDb,
     contracts: {
         LetsCommit: {
-            chain: "localhost",
+            chain: {
+                // localhost: {
+                //     address: process.env.LETS_COMMIT_ADDRESS_LOCALHOST as `0x${string}`,
+                //     startBlock: 0,
+                // },
+                monadTestnet: {
+                    address: process.env.LETS_COMMIT_ADDRESS_MONAD as `0x${string}`,
+                    startBlock: 'latest',
+                }
+            },
             abi: IEventIndexerAbi,
-            address: process.env.LETS_COMMIT_ADDRESS as `0x${string}`,
-            startBlock: 0,
         }
     },
     // blocks: {
@@ -46,5 +53,4 @@ export default createConfig({
     //         interval: 1
     //     },
     // }
-});
-
+})
