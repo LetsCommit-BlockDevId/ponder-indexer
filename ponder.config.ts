@@ -1,5 +1,5 @@
 import {createConfig, type DatabaseConfig} from "ponder";
-import {IEventIndexerAbi, IEventIndexerAddress} from "./abis/IEventIndexerAbi";
+import {IEventIndexerAbi} from "./abis/IEventIndexerAbi";
 
 
 const postgreDb = {
@@ -23,19 +23,19 @@ export default createConfig({
             pollingInterval: 1_000,
             disableCache: true
         },
+        monadTestnet: {
+            id: 10143,
+            rpc: process.env.RPC_MONAD_TESTNET,
+            pollingInterval: 1_000,
+            disableCache: false
+        }
     },
     database: postgreDb,
     contracts: {
-        // WeCan: {
-        //     chain: "localhost",
-        //     abi: WeCanAbi,
-        //     address: WeCanAddress,
-        //     startBlock: undefined,
-        // },
         LetsCommit: {
             chain: "localhost",
             abi: IEventIndexerAbi,
-            address: IEventIndexerAddress,
+            address: process.env.LETS_COMMIT_ADDRESS as `0x${string}`,
             startBlock: 0,
         }
     },
