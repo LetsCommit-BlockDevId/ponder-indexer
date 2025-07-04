@@ -14,10 +14,10 @@ import {
 *  Create Event
 * =====================================================================
 */
-ponder.on("LetsCommit:CreateEvent", ({event, context}) => {
+ponder.on("LetsCommit:CreateEvent", async ({event, context}) => {
 
     // Insert Event Context
-    context.db
+    await context.db
         .insert(eventTable)
         .values({
             id: event.args.eventId,
@@ -32,10 +32,10 @@ ponder.on("LetsCommit:CreateEvent", ({event, context}) => {
         .onConflictDoNothing();
 });
 
-ponder.on("LetsCommit:CreateEventMetadata", ({event, context}) => {
+ponder.on("LetsCommit:CreateEventMetadata", async ({event, context}) => {
 
     // Insert Event Metadata
-    context.db
+    await context.db
         .update(eventTable, {id: event.args.eventId})
         .set({
             title: event.args.title,
@@ -47,15 +47,21 @@ ponder.on("LetsCommit:CreateEventMetadata", ({event, context}) => {
     // Insert Event Tags
     event.args.tag
         .filter((tag) => tag !== '')
-        .forEach((tag, index) => {
-            context.db
-                .insert(eventTag)
-                .values({
-                    id: event.args.eventId,
-                    index,
-                    tagName: tag,
-                })
-                .onConflictDoNothing()
+        .forEach(async (tag, index) => {
+
+            try {
+                await context.db
+                    .insert(eventTag)
+                    .values({
+                        id: event.args.eventId,
+                        index,
+                        tagName: tag,
+                    })
+                    .onConflictDoNothing();
+            } catch (e) {
+                console.log(`Error inserting tag ${tag} for event ${event.args.eventId}:`, e);
+            }
+
         })
 
 });
@@ -64,10 +70,10 @@ ponder.on("LetsCommit:CreateEventMetadata", ({event, context}) => {
 *  Create Session
 * =====================================================================
 */
-ponder.on("LetsCommit:CreateSession", ({event, context}) => {
+ponder.on("LetsCommit:CreateSession", async ({event, context}) => {
 
     // Insert Session Created w/ Event
-    context.db
+    await context.db
         .insert(createSession)
         .values({
             id: event.args.eventId,
@@ -85,10 +91,10 @@ ponder.on("LetsCommit:CreateSession", ({event, context}) => {
 *  Participant Enroll Event
 * =====================================================================
 */
-ponder.on("LetsCommit:EnrollEvent", ({event, context}) => {
+ponder.on("LetsCommit:EnrollEvent", async ({event, context}) => {
 
     // Insert Participant when enrolling an Event
-    context.db
+    await context.db
         .insert(enrollEvent)
         .values({
             id: event.args.eventId,
@@ -103,9 +109,9 @@ ponder.on("LetsCommit:EnrollEvent", ({event, context}) => {
 *  Participant Attend Session Event
 * =====================================================================
 */
-ponder.on("LetsCommit:AttendEventSession", ({event, context}) => {
+ponder.on("LetsCommit:AttendEventSession", async ({event, context}) => {
 
-    context.db
+    await context.db
         .insert(attendSessionEvent)
         .values({
             id: event.args.eventId,
@@ -121,9 +127,9 @@ ponder.on("LetsCommit:AttendEventSession", ({event, context}) => {
 *  Organizer First Claim
 * =====================================================================
 */
-ponder.on("LetsCommit:OrganizerFirstClaim", ({event, context}) => {
+ponder.on("LetsCommit:OrganizerFirstClaim", async ({event, context}) => {
 
-    context.db
+    await context.db
         .insert(organizerClaimHistory)
         .values({
             id: event.args.eventId,
@@ -140,10 +146,10 @@ ponder.on("LetsCommit:OrganizerFirstClaim", ({event, context}) => {
 *  Generate Session Token And Release
 * =====================================================================
 */
-ponder.on("LetsCommit:SetSessionCode", ({event, context}) => {
+ponder.on("LetsCommit:SetSessionCode", async ({event, context}) => {
 
     // Insert Session Token Generated
-    context.db
+    await context.db
         .insert(organizerClaimHistory)
         .values({
             id: event.args.eventId,
@@ -156,10 +162,10 @@ ponder.on("LetsCommit:SetSessionCode", ({event, context}) => {
 
 });
 
-ponder.on("LetsCommit:GenerateSessionToken", ({event, context}) => {
+ponder.on("LetsCommit:GenerateSessionToken", async ({event, context}) => {
 
     // Insert Session Token Generated
-    context.db
+    await context.db
         .update(createSession, {id: event.args.eventId, session: event.args.session})
         .set({attendToken: event.args.token})
 
@@ -191,9 +197,9 @@ ponder.on("LetsCommit:OrganizerLastClaim", async ({event, context}) => {
 *  Organizer Last Claim Unattended
 * =====================================================================
 */
-ponder.on("LetsCommit:OrganizerClaimUnattended", ({event, context}) => {
+ponder.on("LetsCommit:OrganizerClaimUnattended", async ({event, context}) => {
 
-    context.db
+    await context.db
         .insert(organizerClaimUnattendedHistory)
         .values({
             id: event.args.eventId,
